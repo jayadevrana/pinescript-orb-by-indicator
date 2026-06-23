@@ -1,0 +1,293 @@
+//@version=5
+indicator('ORB By [[Devesh]]', overlay=true)
+
+start_year = input(2024)
+start_month = input(03)
+start_date = input(01)
+
+InSession(sess) =>
+    na(time(timeframe.period, sess)) == false
+sessionHours = input.session(defval="0915-1500", title="Session Hours")
+weekendsStr = ":1234567" 
+bgcolor(InSession(sessionHours + weekendsStr) ? color.new(color.red,85) : na, title="Session Hours")//, transp=85)
+sec=InSession(sessionHours + weekendsStr)
+
+start = timestamp(start_year, start_month, start_date,09,15) == time ? 1 : 0
+startt = false
+startt := startt[1]
+if start
+    startt := true
+
+
+inputMax = input(5, title='ORB total time (minutes)')
+sess = input.session('0915-0920', title='breakout period')
+t = time(timeframe.period, sess + ':1234567')
+hide = timeframe.isintraday and timeframe.multiplier <= inputMax
+
+is_newbar(res) =>
+    ta.change(time(res)) != 0
+in_session = not na(t)
+is_first = in_session and not in_session[1]
+
+orb_high = float(na)
+orb_low = float(na)
+
+if is_first
+    orb_high := high
+    orb_low := low
+    orb_low
+else
+    orb_high := orb_high[1]
+    orb_low := orb_low[1]
+    orb_low
+if high > orb_high and in_session
+    orb_high := high
+    orb_high
+if low < orb_low and in_session
+    orb_low := low
+    orb_low
+
+buffer = input(0)
+orb_high1 = orb_high + buffer
+orb_low1 = orb_low - buffer
+
+if not sec
+    orb_high1 := 0
+
+plot(hide and orb_high1 > 0? orb_high1 : na, style=plot.style_line, color=orb_high[1] != orb_high ? na : color.green, title='ORB High', linewidth=2)
+//plot(hide ? orb_low1 : na, style=plot.style_line, color=orb_low[1] != orb_low ? na : color.red, title='ORB Low', linewidth=2)
+
+input_price = orb_high1
+
+buy = ta.crossover(high, orb_high1) and startt and sec
+// // r = ta.crossunder(close, orb_low1)
+
+// // rg = 0
+// // rg := r ? 1 : g ? 2 : nz(rg[1])
+
+// // buy11 = 0
+// // buy11 := r ? 0 : g ? 1 : nz(buy11[1])
+// // sell11 = 0
+// // sell11 := r ? 1 : g ? 0 : nz(sell11[1])
+
+// // buy1 = buy11 and not buy11[1]
+// // sell1 = sell11 and not sell11[1]
+// //plotshape(buy  , color = color.green , text = "Buy" , location = location.belowbar , textcolor = color.white , style = shape.labelup , size = size.small)
+// //plotshape(sell   , color = color.red , text = "Sell" , location = location.abovebar , textcolor = color.white , style = shape.labeldown , size = size.small)
+
+// //buffer = input(10)
+
+// long_last1 = false
+// short_last1 = false
+
+// long_last1 := nz(long_last1[1])
+// short_last1 := nz(short_last1[1])
+
+
+// //buy1 = buySignal
+// //sell1 = sellSignal
+
+
+// long1 = false
+// long1 := nz(long1[1])
+
+// short1 = false
+// short1 := nz(short1[1])
+
+// long_wait1 = false
+// long_wait1 := nz(long_wait1[1])
+
+// short_wait1 = false
+// short_wait1 := nz(short_wait1[1])
+
+// low_forming = sell1  //and not short_last1
+// high_forming = buy1  //and not long_last1
+
+// entry_p = 0.0
+// entry_p := nz(entry_p[1])
+
+// if low_forming
+//     entry_p := close - buffer
+//     short_wait1 := true
+//     long_wait1 := false
+//     long_wait1
+
+// if high_forming
+//     entry_p := close + buffer
+//     long_wait1 := true
+//     short_wait1 := false
+//     short_wait1
+
+// //buy = long_wait1 and crossover(high , entry_p)
+// //sell = short_wait1 and crossunder(low , entry_p)
+// buy = long_wait1 and buy1  and startt and sec//high > entry_p//crossover(high , entry_p)
+sell = false  //short_wait1 and sell1//low < entry_p//crossunder(low , entry_p)
+
+
+// if buy
+//     long1 := true
+//     long_wait1 := false
+//     short1 := false
+//     long_last1 := true
+//     short_last1 := false
+//     short_last1
+
+// if sell
+//     short1 := true
+//     short_wait1 := false
+//     long1 := false
+//     long_last1 := false
+//     short_last1 := true
+//     short_last1
+
+
+
+Stop = input(50.0, title='StopLoss ')
+
+ProfitPerc1 = input(defval=30.0, title='TARGET 1')
+
+ProfitPerc = input(defval=50.0, title='TARGET 2')
+
+
+long_short = 0
+long_last = buy and (nz(long_short[1]) == 0 or nz(long_short[1]) == -1)
+short_last = sell and (nz(long_short[1]) == 0 or nz(long_short[1]) == 1)
+long_short := long_last ? 1 : short_last ? -1 : long_short[1]
+
+long_entered = false
+long_entered := long_entered[1]
+
+
+long_entered1 = false
+long_entered1 := long_entered1[1]
+
+short_entered = false
+short_entered := short_entered[1]
+
+l_price = 0.00
+
+if  open < input_price and high > input_price
+    l_price := input_price
+
+// if ta.crossover(high,input_price)
+//     l_price := input_price1
+
+// if ta.crossover(high,input_price2)
+//     l_price := input_price2
+
+// if ta.crossover(high,input_price3)
+//     l_price := input_price3
+
+// if ta.crossover(high,input_price4)
+//     l_price := input_price4
+
+longPrice = ta.valuewhen(buy and not long_entered, l_price, 0)
+
+
+shortPrice = ta.valuewhen(sell and not short_entered, input_price, 0)
+
+if buy and not long_entered
+    long_entered1 := true
+
+
+
+longStop = longPrice - Stop
+shortStop = shortPrice + Stop
+longTake = longPrice + ProfitPerc
+longTake1 = longPrice + ProfitPerc1
+shortTake = shortPrice - ProfitPerc
+
+
+if high > longTake1 //and long_entered1
+    long_entered1 := false
+
+if long_entered and not long_entered1[1]
+    longStop := input_price
+
+//plotshape(long_entered1)
+
+plotshape(high > longTake1 and long_entered1[1] == true, style=shape.labeldown, location=location.abovebar, color=color.new(color.navy, 0), size=size.tiny, title='Target', text='TP 1', textcolor=color.new(color.white, 0))
+
+
+plot(long_short == 1 ? longStop : na, style=plot.style_linebr, color=color.new(color.red, 0), linewidth=1, title='Long Fixed SL')
+plot(long_short == -1 ? shortStop : na, style=plot.style_linebr, color=color.new(color.red, 0), linewidth=1, title='Short Fixed SL')
+plot(long_short == 1 ? longTake : na, style=plot.style_linebr, color=color.new(color.navy, 0), linewidth=1, title='Long Fixed TP')
+plot(long_entered1 ? longTake1 : na, style=plot.style_linebr, color=color.new(color.navy, 0), linewidth=1, title='Long Fixed TP1')
+
+plot(long_short == -1 ? shortTake : na, style=plot.style_linebr, color=color.new(color.navy, 0), linewidth=1, title='Short Fixed TP')
+
+
+longBar1 = ta.barssince(long_last)
+longBar2 = longBar1 >= 0 ? true : false
+shortBar1 = ta.barssince(short_last)
+shortBar2 = shortBar1 >= 0 ? true : false
+
+longSLhit = long_short == 1 and longBar2 and low < longStop
+// The Trailing Stop Code
+ 
+//alertcondition(condition=long_last, title="Long Alarm", message='Open a Long Trade @ ${{close}}')
+//alertcondition(condition=short_last, title="Short Alarm", message='Open a Short Trade @ ${{close}}')
+ 
+// alertcondition(condition=longSLhit, title="Long Trailing Stop", message='Long TSL Hit @ ${{plot_2}}')
+// alertcondition(condition=shortSLhit, title="Short Trailing Stop", message='Short TSL Hit @ ${{plot_3}}')
+ 
+
+
+plotshape(longSLhit and not(sell and not short_entered and long_entered), style=shape.labelup, location=location.belowbar, color=color.new(color.gray, 0), size=size.tiny, title='Stop Loss', text='Long SL', textcolor=color.new(color.white, 0))
+shortSLhit = long_short == -1 and shortBar2 and high > shortStop
+
+
+
+
+// if(long_entered and not sec)
+//     shortSLhit := true
+
+plotshape(shortSLhit and not(buy and not long_entered and short_entered), style=shape.labeldown, location=location.abovebar, color=color.new(color.gray, 0), size=size.tiny, title='Stop Loss', text='Short SL', textcolor=color.new(color.white, 0))
+
+
+longTPhit = long_short == 1 and longBar2 and high > longTake
+plotshape(longTPhit, style=shape.labeldown, location=location.abovebar, color=color.new(color.navy, 0), size=size.tiny, title='Target', text='TP 2', textcolor=color.new(color.white, 0))
+shortTPhit = long_short == -1 and shortBar2 and low < shortTake
+plotshape(shortTPhit, style=shape.labelup, location=location.belowbar, color=color.new(color.navy, 0), size=size.tiny, title='Target', text='Short TP', textcolor=color.new(color.white, 0))
+
+long_short := (long_short == 1 or long_short == 0) and longBar2 and (longSLhit or longTPhit) ? 0 : (long_short == -1 or long_short == 0) and shortBar2 and (shortSLhit or shortTPhit) ? 0 : long_short
+
+// buffer = input(10.0)
+
+plotshape(buy and not long_entered, color=color.new(color.green, 0), style=shape.labelup, text='Buy', textcolor=color.new(color.white, 0), location=location.belowbar)
+plotshape(sell and not short_entered, color=color.new(color.red, 0), style=shape.labeldown, text='Sell', textcolor=color.new(color.white, 0), location=location.abovebar)
+
+
+
+// plotshape(buy and not(long_entered) and (short_entered), color = color.green , style = shape.labelup , text = "FA Buy" , textcolor = color.white , location = location.belowbar)
+// plotshape(sell and not(short_entered)  and (long_entered), color = color.red , style = shape.labeldown , text = "FA Sell" , textcolor = color.white , location = location.abovebar)
+
+
+// alertcondition(condition=buy and  not(long_entered)  and (short_entered), title="Fully Algo Buy")
+// alertcondition(condition=sell and  not(short_entered)  and (long_entered), title="Fully Algo sell")
+
+
+if long_last
+    long_entered := true
+    short_entered := false
+    short_entered
+if short_last
+    short_entered := true
+    long_entered := false
+    long_entered
+
+
+if longSLhit or longTPhit
+    long_entered1 := false
+    long_entered := false
+    long_entered
+
+if shortSLhit or shortTPhit
+    short_entered := false
+    short_entered
+
+exit = (longSLhit or shortSLhit or longTPhit or shortTPhit)
+
+
+
+//use_BB_as_target = input(false)
